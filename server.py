@@ -6,8 +6,6 @@ import uvicorn
 from email.header import decode_header
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.server import TransportSecuritySettings
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
 
 RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "icloud-mail-mcp-production.up.railway.app")
 
@@ -24,7 +22,7 @@ IMAP_HOST = "imap.mail.me.com"
 IMAP_PORT = 993
 EMAIL_ADDRESS = os.environ.get("ICLOUD_EMAIL", "shaddboese2023@icloud.com")
 APP_PASSWORD = os.environ.get("ICLOUD_APP_PASSWORD", "")
-API_TOKEN = os.environ.get("MCP_API_TOKEN", "")
+
 
 
 def connect():
@@ -176,16 +174,6 @@ def list_recent_emails(folder: str = "INBOX", count: int = 20) -> str:
     return json.dumps(results, indent=2)
 
 
-class BearerAuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        if API_TOKEN:
-            auth = request.headers.get("Authorization", "")
-            if not (auth.startswith("Bearer ") and auth[7:] == API_TOKEN):
-                return JSONResponse({"error": "Unauthorized"}, status_code=401)
-        return await call_next(request)
-
-
 if __name__ == "__main__":
     app = mcp.streamable_http_app()
-    app.add_middleware(BearerAuthMiddleware)
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8080")))

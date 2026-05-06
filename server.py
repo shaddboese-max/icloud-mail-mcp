@@ -5,10 +5,20 @@ import json
 import uvicorn
 from email.header import decode_header
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.server import TransportSecuritySettings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-mcp = FastMCP("iCloud Mail")
+RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "icloud-mail-mcp-production.up.railway.app")
+
+mcp = FastMCP(
+    "iCloud Mail",
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=[RAILWAY_DOMAIN, "localhost", "127.0.0.1"],
+        allowed_origins=[f"https://{RAILWAY_DOMAIN}"],
+    ),
+)
 
 IMAP_HOST = "imap.mail.me.com"
 IMAP_PORT = 993

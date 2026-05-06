@@ -1,0 +1,7 @@
+mcp==1.27.0
+uvicorn==0.46.0
+starlette==1.0.0
+sse-starlette==3.4.1
+httpx==0.28.1
+httpx-sse==0.4.3
+anyio==4.13.0

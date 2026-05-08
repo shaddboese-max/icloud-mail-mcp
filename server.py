@@ -175,5 +175,24 @@ def list_recent_emails(folder: str = "INBOX", count: int = 20) -> str:
 
 
 if __name__ == "__main__":
+    from starlette.routing import Route
+    from starlette.responses import JSONResponse, Response
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    class FilterBadMCPRequests(BaseHTTPMiddleware):
+        """Block GET /mcp requests that lack the right Accept header before FastMCP
+        creates a session object — prevents the session-accumulation OOM leak."""
+        async def dispatch(self, request, call_next):
+            if request.url.path == "/mcp" and request.method == "GET":
+                accept = request.headers.get("accept", "")
+                if "text/event-stream" not in accept and "application/json" not in accept:
+                    return Response(status_code=406)
+            return await call_next(request)
+
+    async def health(request):
+        return JSONResponse({"status": "ok"})
+
     app = mcp.streamable_http_app()
+    app.add_middleware(FilterBadMCPRequests)
+    app.routes.insert(0, Route("/health", health))
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8080")))
